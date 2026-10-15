@@ -7,6 +7,18 @@ import { settingsStore } from '~/store';
 
 const { BrowserWindow: RemoteBrowserWindow } = remote;
 
+// Matches amazon.com, amazon.co.jp, amazon.de, ... and their subdomains (www., read., ...)
+const amazonHostPattern = /(^|\.)amazon\.[a-z]{2,3}(\.[a-z]{2})?$/;
+
+const isAmazonUrl = (url: string): boolean => {
+  try {
+    const { protocol, hostname } = new URL(url);
+    return protocol === 'https:' && amazonHostPattern.test(hostname);
+  } catch {
+    return false;
+  }
+};
+
 export default class AmazonLoginModal {
   private modal: BrowserWindow;
   private waitForSignIn: Promise<boolean>;
@@ -28,6 +40,16 @@ export default class AmazonLoginModal {
         partition: 'persist:kindle-highlights',
       },
       show: false,
+    });
+
+    // Obsidian cancels http(s) navigations in every window it creates and reopens them in the
+    // system browser, ejecting the Amazon login flow. Replace that listener on the window we own
+    // with one that keeps Amazon pages inside the modal and still blocks everything else.
+    this.modal.webContents.removeAllListeners('will-navigate');
+    this.modal.webContents.on('will-navigate', (event, url) => {
+      if (!isAmazonUrl(url)) {
+        event.preventDefault();
+      }
     });
 
     // We can only change title after page is loaded since HTML page has its own title
