@@ -17,8 +17,15 @@ import { loadRemoteDom } from './loadRemoteDom';
 export const parseToDateString = (kindleDate: string, region: AmazonAccountRegion): Date => {
   switch (region) {
     case 'japan': {
-      const amazonDateString = kindleDate.substring(0, kindleDate.indexOf(' '));
-      return moment(amazonDateString, 'YYYY MM DD', 'ja').toDate();
+      // The Japanese store may render "2021年11月15日 月曜日" or, with an English UI,
+      // "Monday November 15, 2021"
+      const match = kindleDate.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+      if (match) {
+        const [, year, month, day] = match.map(Number);
+        return new Date(year, month - 1, day);
+      }
+      const amazonDateString = kindleDate.substr(kindleDate.indexOf(' ') + 1);
+      return moment(amazonDateString, 'MMM DD, YYYY').toDate();
     }
     case 'france': {
       return moment(kindleDate, 'MMMM D, YYYY', 'fr').toDate();

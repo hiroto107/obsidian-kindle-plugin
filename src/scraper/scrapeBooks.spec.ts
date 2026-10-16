@@ -16,6 +16,16 @@ describe('parseToDateString', () => {
     expect(lastAnnotatedDate).toEqual(new Date(2021, 10, 15));
   });
 
+  it('Parses Japanese last annotated date without a space before the weekday', () => {
+    const lastAnnotatedDate = parseToDateString('2026年10月5日月曜日', 'japan');
+    expect(lastAnnotatedDate).toEqual(new Date(2026, 9, 5));
+  });
+
+  it('Parses English last annotated date on the Japanese store', () => {
+    const lastAnnotatedDate = parseToDateString('Thursday October 15, 2026', 'japan');
+    expect(lastAnnotatedDate).toEqual(new Date(2026, 9, 15));
+  });
+
   it('Parses French last annotated date', () => {
     const lastAnnotatedDate = parseToDateString('mardi août 30, 2022', 'france');
     expect(lastAnnotatedDate).toEqual(new Date(2022, 7, 30));
